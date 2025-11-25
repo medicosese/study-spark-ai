@@ -8,6 +8,7 @@ import { Card } from "./ui/card";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { GeneratedContent } from "@/pages/Index";
+import { generateStudyMaterials } from "@/lib/api";
 
 interface GeneratorProps {
   onGenerate: (content: GeneratedContent) => void;
@@ -61,44 +62,26 @@ export const Generator = ({ onGenerate, onUpgradeClick }: GeneratorProps) => {
     setIsGenerating(true);
 
     try {
-      // TODO: Replace with actual API call to edge function
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock data for now
-      const mockContent: GeneratedContent = {
-        summary: "This is a generated summary of your text. It captures the key points and main ideas in a concise format.",
-        flashcards: [
-          { question: "What is the main topic?", answer: "The main topic is..." },
-          { question: "Define key concept", answer: "Key concept means..." },
-        ],
-        mcqs: [
-          { 
-            question: "What is the primary focus of this text?", 
-            options: ["Option A", "Option B", "Option C", "Option D"],
-            correctAnswer: 0
-          },
-        ],
-        trueFalse: [
-          { statement: "This statement is about the main topic", answer: true },
-        ],
-        definitions: [
-          { term: "Term 1", definition: "Definition of term 1" },
-          { term: "Term 2", definition: "Definition of term 2" },
-        ],
-        kidsExplanation: "This is explained in a simple way that kids can understand!",
-        professionalExplanation: "This is a detailed, professional explanation of the content.",
-      };
+      const content = await generateStudyMaterials({
+        text,
+        difficulty,
+        options: selectedOptions,
+      });
 
-      onGenerate(mockContent);
+      onGenerate(content);
       
       toast({
         title: "Success!",
         description: "Your study materials have been generated.",
       });
     } catch (error) {
+      console.error("Generation error:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
       toast({
         title: "Generation Failed",
-        description: "There was an error generating your study materials. Please try again.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
