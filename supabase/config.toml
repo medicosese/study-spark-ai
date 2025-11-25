@@ -1,0 +1,4 @@
+project_id = "rvzywbpwsqtjtzwxejue"
+
+[functions.generate-study-materials]
+verify_jwt = false
