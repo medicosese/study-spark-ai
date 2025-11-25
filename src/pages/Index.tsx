@@ -5,20 +5,17 @@ import { ResultsDisplay } from "@/components/ResultsDisplay";
 import { PremiumModal } from "@/components/PremiumModal";
 import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { Toaster } from "@/components/ui/toaster";
-
-export type GeneratedContent = {
-  summary: string;
-  flashcards: Array<{ question: string; answer: string }>;
-  mcqs: Array<{ question: string; options: string[]; correctAnswer: number }>;
-  trueFalse: Array<{ statement: string; answer: boolean }>;
-  definitions: Array<{ term: string; definition: string }>;
-  kidsExplanation: string;
-  professionalExplanation: string;
-};
+import type { GeneratedContent } from "@/types/studyMaterials";
 
 const Index = () => {
   const [generatedContent, setGeneratedContent] = useState<GeneratedContent | null>(null);
+  const [difficulty, setDifficulty] = useState<string>("university");
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+
+  const handleGenerate = (content: GeneratedContent, difficultyLevel: string) => {
+    setGeneratedContent(content);
+    setDifficulty(difficultyLevel);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,13 +34,13 @@ const Index = () => {
           {/* Main Content */}
           <div className="lg:col-span-10">
             <Generator 
-              onGenerate={setGeneratedContent}
+              onGenerate={handleGenerate}
               onUpgradeClick={() => setIsPremiumModalOpen(true)}
             />
             
             {generatedContent && (
               <div className="mt-8 animate-slide-up">
-                <ResultsDisplay content={generatedContent} />
+                <ResultsDisplay content={generatedContent} difficulty={difficulty} />
               </div>
             )}
           </div>

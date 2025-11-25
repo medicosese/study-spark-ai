@@ -1,12 +1,22 @@
 import { useState } from "react";
-import { Copy, Download, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Copy, Download, ChevronDown, ChevronUp, Check, FileDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { GeneratedContent } from "@/pages/Index";
+import type { GeneratedContent } from "@/types/studyMaterials";
+import {
+  downloadSummaryPDF,
+  downloadFlashcardsPDF,
+  downloadMCQsPDF,
+  downloadTrueFalsePDF,
+  downloadDefinitionsPDF,
+  downloadExplanationPDF,
+  downloadAllContentPDF
+} from "@/lib/pdfGenerator";
 
 interface ResultsDisplayProps {
   content: GeneratedContent;
+  difficulty?: string;
 }
 
 type SectionKey = keyof GeneratedContent;
@@ -21,7 +31,7 @@ const sections: Array<{ key: SectionKey; title: string; icon: string }> = [
   { key: "professionalExplanation", title: "Professional Explanation", icon: "💼" },
 ];
 
-export const ResultsDisplay = ({ content }: ResultsDisplayProps) => {
+export const ResultsDisplay = ({ content, difficulty = "university" }: ResultsDisplayProps) => {
   const [expandedSections, setExpandedSections] = useState<SectionKey[]>(["summary"]);
   const [copiedSection, setCopiedSection] = useState<SectionKey | null>(null);
   const { toast } = useToast();
@@ -53,10 +63,86 @@ export const ResultsDisplay = ({ content }: ResultsDisplayProps) => {
   };
 
   const downloadPDF = () => {
-    toast({
-      title: "Coming Soon",
-      description: "PDF download feature will be available in the premium version.",
-    });
+    try {
+      downloadAllContentPDF(content, difficulty);
+      toast({
+        title: "Success!",
+        description: "Complete study materials downloaded as PDF.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const downloadSectionPDF = (key: SectionKey) => {
+    try {
+      const data = content[key];
+      const capitalizedDifficulty = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+      
+      const section = sections.find(s => s.key === key);
+      const title = section?.title || key;
+      
+      switch (key) {
+        case "summary":
+          downloadSummaryPDF(data as string, {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+        case "flashcards":
+          downloadFlashcardsPDF(data as GeneratedContent["flashcards"], {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+        case "mcqs":
+          downloadMCQsPDF(data as GeneratedContent["mcqs"], {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+        case "trueFalse":
+          downloadTrueFalsePDF(data as GeneratedContent["trueFalse"], {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+        case "definitions":
+          downloadDefinitionsPDF(data as GeneratedContent["definitions"], {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+        case "kidsExplanation":
+        case "professionalExplanation":
+          downloadExplanationPDF(data as string, {
+            title,
+            difficulty: capitalizedDifficulty,
+            fileName: `${key}.pdf`
+          });
+          break;
+      }
+      
+      toast({
+        title: "Success!",
+        description: `${title} downloaded as PDF.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderContent = (key: SectionKey) => {
@@ -150,11 +236,11 @@ export const ResultsDisplay = ({ content }: ResultsDisplayProps) => {
       <div className="flex flex-wrap gap-3 justify-end">
         <Button
           onClick={downloadPDF}
-          variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+          variant="default"
+          data-testid="button-download-all-pdf"
         >
           <Download className="w-4 h-4 mr-2" />
-          Download PDF
+          Download All as PDF
         </Button>
       </div>
 
@@ -183,9 +269,22 @@ export const ResultsDisplay = ({ content }: ResultsDisplayProps) => {
                     variant="ghost"
                     onClick={(e) => {
                       e.stopPropagation();
+                      downloadSectionPDF(key);
+                    }}
+                    className="hover:bg-background"
+                    data-testid={`button-download-${key}-pdf`}
+                  >
+                    <FileDown className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       copySection(key);
                     }}
                     className="hover:bg-background"
+                    data-testid={`button-copy-${key}`}
                   >
                     {copiedSection === key ? (
                       <Check className="w-4 h-4 text-secondary" />

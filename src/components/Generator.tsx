@@ -7,11 +7,11 @@ import { Checkbox } from "./ui/checkbox";
 import { Card } from "./ui/card";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { GeneratedContent } from "@/pages/Index";
+import type { GeneratedContent } from "@/types/studyMaterials";
 import { generateStudyMaterials } from "@/lib/api";
 
 interface GeneratorProps {
-  onGenerate: (content: GeneratedContent) => void;
+  onGenerate: (content: GeneratedContent, difficulty: string) => void;
   onUpgradeClick: () => void;
 }
 
@@ -68,7 +68,7 @@ export const Generator = ({ onGenerate, onUpgradeClick }: GeneratorProps) => {
         options: selectedOptions,
       });
 
-      onGenerate(content);
+      onGenerate(content, difficulty);
       
       toast({
         title: "Success!",

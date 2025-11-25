@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { GeneratedContent } from "@/pages/Index";
+import type { GeneratedContent } from "@/types/studyMaterials";
 
 export interface GenerateOptions {
   text: string;
