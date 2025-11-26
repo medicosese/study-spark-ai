@@ -6,21 +6,26 @@ interface PDFOptions {
   title: string;
   difficulty?: string;
   fileName?: string;
+  watermark?: string; // User's real name
 }
 
-const initializePDF = (title: string, difficulty?: string): jsPDF => {
+const initializePDF = (title: string, difficulty?: string, watermark?: string): jsPDF => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   
+  // App header
   doc.setFontSize(20);
   doc.setFont(undefined, 'bold');
-  doc.text(title, pageWidth / 2, 20, { align: 'center' });
+  doc.text('Universal Study Material Generator', pageWidth / 2, 15, { align: 'center' });
+  
+  doc.setFontSize(16);
+  doc.text(title, pageWidth / 2, 25, { align: 'center' });
   
   if (difficulty) {
     doc.setFontSize(12);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(100, 100, 100);
-    doc.text(`Difficulty Level: ${difficulty}`, pageWidth / 2, 30, { align: 'center' });
+    doc.text(`Difficulty Level: ${difficulty}`, pageWidth / 2, 33, { align: 'center' });
   }
   
   doc.setFontSize(10);
@@ -30,10 +35,17 @@ const initializePDF = (title: string, difficulty?: string): jsPDF => {
     month: 'long', 
     day: 'numeric' 
   });
-  doc.text(`Generated on ${date}`, pageWidth / 2, 37, { align: 'center' });
+  doc.text(`Generated on ${date}`, pageWidth / 2, 40, { align: 'center' });
+  
+  // Watermark if provided
+  if (watermark) {
+    doc.setFontSize(9);
+    doc.setTextColor(180, 180, 180);
+    doc.text(`Generated for: ${watermark}`, pageWidth / 2, 47, { align: 'center' });
+  }
   
   doc.setDrawColor(200, 200, 200);
-  doc.line(20, 42, pageWidth - 20, 42);
+  doc.line(20, 50, pageWidth - 20, 50);
   
   doc.setTextColor(0, 0, 0);
   doc.setFont(undefined, 'normal');
@@ -41,15 +53,33 @@ const initializePDF = (title: string, difficulty?: string): jsPDF => {
   return doc;
 };
 
+// Add page numbers to all pages
+const addPageNumbers = (doc: jsPDF) => {
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text(
+      `Page ${i} of ${pageCount}`,
+      doc.internal.pageSize.getWidth() / 2,
+      doc.internal.pageSize.getHeight() - 10,
+      { align: 'center' }
+    );
+  }
+};
+
 export const downloadSummaryPDF = (summary: string, options: PDFOptions) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
   doc.setFontSize(12);
   const margin = 20;
   const maxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
   
   const lines = doc.splitTextToSize(summary, maxWidth);
-  doc.text(lines, margin, 50);
+  doc.text(lines, margin, 58);
+  
+  addPageNumbers(doc);
   
   const fileName = options.fileName || 'study-summary.pdf';
   doc.save(fileName);
@@ -59,7 +89,7 @@ export const downloadFlashcardsPDF = (
   flashcards: Array<{ question: string; answer: string }>,
   options: PDFOptions
 ) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
   const tableData = flashcards.map((card, index) => [
     `${index + 1}`,
@@ -68,7 +98,7 @@ export const downloadFlashcardsPDF = (
   ]);
   
   autoTable(doc, {
-    startY: 50,
+    startY: 58,
     head: [['#', 'Question', 'Answer']],
     body: tableData,
     theme: 'grid',
@@ -90,6 +120,8 @@ export const downloadFlashcardsPDF = (
     }
   });
   
+  addPageNumbers(doc);
+  
   const fileName = options.fileName || 'flashcards.pdf';
   doc.save(fileName);
 };
@@ -98,9 +130,9 @@ export const downloadMCQsPDF = (
   mcqs: Array<{ question: string; options: string[]; correctAnswer: number }>,
   options: PDFOptions
 ) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
-  let yPosition = 50;
+  let yPosition = 58;
   const margin = 20;
   const pageHeight = doc.internal.pageSize.getHeight();
   
@@ -142,6 +174,8 @@ export const downloadMCQsPDF = (
     yPosition += 8;
   });
   
+  addPageNumbers(doc);
+  
   const fileName = options.fileName || 'mcqs.pdf';
   doc.save(fileName);
 };
@@ -150,7 +184,7 @@ export const downloadTrueFalsePDF = (
   trueFalse: Array<{ statement: string; answer: boolean }>,
   options: PDFOptions
 ) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
   const tableData = trueFalse.map((item, index) => [
     `${index + 1}`,
@@ -159,7 +193,7 @@ export const downloadTrueFalsePDF = (
   ]);
   
   autoTable(doc, {
-    startY: 50,
+    startY: 58,
     head: [['#', 'Statement', 'Answer']],
     body: tableData,
     theme: 'grid',
@@ -190,6 +224,8 @@ export const downloadTrueFalsePDF = (
     }
   });
   
+  addPageNumbers(doc);
+  
   const fileName = options.fileName || 'true-false.pdf';
   doc.save(fileName);
 };
@@ -198,7 +234,7 @@ export const downloadDefinitionsPDF = (
   definitions: Array<{ term: string; definition: string }>,
   options: PDFOptions
 ) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
   const tableData = definitions.map((item, index) => [
     `${index + 1}`,
@@ -207,7 +243,7 @@ export const downloadDefinitionsPDF = (
   ]);
   
   autoTable(doc, {
-    startY: 50,
+    startY: 58,
     head: [['#', 'Term', 'Definition']],
     body: tableData,
     theme: 'grid',
@@ -229,6 +265,8 @@ export const downloadDefinitionsPDF = (
     }
   });
   
+  addPageNumbers(doc);
+  
   const fileName = options.fileName || 'definitions.pdf';
   doc.save(fileName);
 };
@@ -237,14 +275,16 @@ export const downloadExplanationPDF = (
   explanation: string,
   options: PDFOptions
 ) => {
-  const doc = initializePDF(options.title, options.difficulty);
+  const doc = initializePDF(options.title, options.difficulty, options.watermark);
   
   doc.setFontSize(12);
   const margin = 20;
   const maxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
   
   const lines = doc.splitTextToSize(explanation, maxWidth);
-  doc.text(lines, margin, 50);
+  doc.text(lines, margin, 58);
+  
+  addPageNumbers(doc);
   
   const fileName = options.fileName || 'explanation.pdf';
   doc.save(fileName);
@@ -252,10 +292,11 @@ export const downloadExplanationPDF = (
 
 export const downloadAllContentPDF = (
   content: GeneratedContent,
-  difficulty: string
+  difficulty: string,
+  watermark?: string
 ) => {
-  const doc = initializePDF('Complete Study Materials', difficulty);
-  let yPosition = 50;
+  const doc = initializePDF('Complete Study Materials', difficulty, watermark);
+  let yPosition = 58;
   const margin = 20;
   const pageHeight = doc.internal.pageSize.getHeight();
   const maxWidth = doc.internal.pageSize.getWidth() - 2 * margin;
@@ -439,6 +480,8 @@ export const downloadAllContentPDF = (
       yPosition += 6;
     });
   }
+  
+  addPageNumbers(doc);
   
   doc.save('complete-study-materials.pdf');
 };
