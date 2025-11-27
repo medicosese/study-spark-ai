@@ -30,21 +30,26 @@ serve(async (req) => {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else if (file.type === 'application/pdf') {
-      // For PDF files, use pdf-parse library
+      // For PDF files, use unpdf which works in Deno/edge environments
       try {
         const arrayBuffer = await file.arrayBuffer();
-        const buffer = new Uint8Array(arrayBuffer);
         
-        // Import pdf-parse from npm via esm.sh
-        const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
-        const data = await pdfParse.default(buffer);
-        extractedText = data.text;
+        // Import unpdf which is designed for edge runtimes
+        const { extractText } = await import('https://esm.sh/unpdf@0.11.0');
+        const result = await extractText(new Uint8Array(arrayBuffer));
         
-        console.log('PDF parsed successfully, pages:', data.numpages, 'text length:', data.text.length);
+        // Handle both string and array returns from unpdf
+        extractedText = Array.isArray(result.text) ? result.text.join('\n') : result.text;
+        
+        console.log('PDF parsed successfully, text length:', extractedText.length);
       } catch (pdfError) {
         console.error('PDF parsing error:', pdfError);
+        
+        // If unpdf fails, provide helpful error message
         return new Response(
-          JSON.stringify({ error: 'Failed to parse PDF. Please ensure the file is not password-protected and is a valid PDF.' }),
+          JSON.stringify({ 
+            error: 'Failed to extract text from PDF. For best results, please:\n1. Ensure the PDF contains selectable text (not scanned images)\n2. Try converting the PDF to TXT format\n3. Or copy and paste the text directly into the text area' 
+          }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -77,7 +82,7 @@ serve(async (req) => {
 
     if (!extractedText || extractedText.length < 10) {
       return new Response(
-        JSON.stringify({ error: 'No meaningful text could be extracted from the file.' }),
+        JSON.stringify({ error: 'No meaningful text could be extracted from the file. The PDF might contain only images. Please try a text-based PDF or convert it to TXT format.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
