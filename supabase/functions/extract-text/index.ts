@@ -30,37 +30,13 @@ serve(async (req) => {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else if (file.type.startsWith('image/')) {
-      // Handle image files with OCR
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        
-        // Import Tesseract.js for OCR
-        const Tesseract = await import('https://esm.sh/tesseract.js@5.0.4');
-        
-        // Create a blob URL for the image
-        const blob = new Blob([arrayBuffer], { type: file.type });
-        const imageData = await blob.arrayBuffer();
-        
-        console.log('Starting OCR processing for image...');
-        const result = await Tesseract.recognize(
-          new Uint8Array(imageData),
-          'eng',
-          {
-            logger: (m: any) => console.log('OCR progress:', m)
-          }
-        );
-        
-        extractedText = result.data.text;
-        console.log('OCR completed, text length:', extractedText.length);
-      } catch (ocrError) {
-        console.error('OCR error:', ocrError);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Failed to extract text from image. Please ensure the image contains clear, readable text.' 
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      // OCR functionality is not available in edge functions due to Worker API limitations
+      return new Response(
+        JSON.stringify({ 
+          error: 'Image OCR is not yet supported. Please use an online OCR tool (like Google Drive or Adobe) to convert your image to text first, then paste the text directly.' 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     } else if (file.type === 'application/pdf') {
       // For PDF files, use unpdf which works in Deno/edge environments
       try {
@@ -100,7 +76,7 @@ serve(async (req) => {
       );
     } else {
       return new Response(
-        JSON.stringify({ error: 'Unsupported file type. Please upload TXT, PDF, or image files (JPG, PNG, WEBP).' }),
+        JSON.stringify({ error: 'Unsupported file type. Please upload TXT or PDF files.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
