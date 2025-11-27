@@ -30,13 +30,57 @@ serve(async (req) => {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else if (file.type.startsWith('image/')) {
-      // OCR functionality is not available in edge functions due to Worker API limitations
-      return new Response(
-        JSON.stringify({ 
-          error: 'Image OCR is not yet supported. Please use an online OCR tool (like Google Drive or Adobe) to convert your image to text first, then paste the text directly.' 
-        }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      // Use Lovable AI Gateway for OCR
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const base64Image = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const imageUrl = `data:${file.type};base64,${base64Image}`;
+        
+        console.log('Starting AI OCR for image...');
+        
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'google/gemini-2.5-flash',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'Extract all text from this image. Return ONLY the extracted text, nothing else. If there is no readable text, return "No text found".'
+                  },
+                  {
+                    type: 'image_url',
+                    image_url: { url: imageUrl }
+                  }
+                ]
+              }
+            ],
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('AI OCR request failed');
+        }
+
+        const data = await response.json();
+        extractedText = data.choices[0].message.content;
+        
+        console.log('AI OCR completed, text length:', extractedText.length);
+      } catch (ocrError) {
+        console.error('OCR error:', ocrError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Failed to extract text from image. Please ensure the image contains clear, readable text.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     } else if (file.type === 'application/pdf') {
       // For PDF files, use unpdf which works in Deno/edge environments
       try {
@@ -76,7 +120,7 @@ serve(async (req) => {
       );
     } else {
       return new Response(
-        JSON.stringify({ error: 'Unsupported file type. Please upload TXT or PDF files.' }),
+        JSON.stringify({ error: 'Unsupported file type. Please upload TXT, PDF, or image files (JPG, PNG, WEBP).' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

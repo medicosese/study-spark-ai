@@ -95,7 +95,10 @@ export const Generator = ({ onGenerate, onUpgradeClick }: GeneratorProps) => {
     onDrop,
     accept: {
       'text/plain': ['.txt'],
-      'application/pdf': ['.pdf']
+      'application/pdf': ['.pdf'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
     },
     maxFiles: 1,
     disabled: isExtractingText || isGenerating,
@@ -222,7 +225,7 @@ export const Generator = ({ onGenerate, onUpgradeClick }: GeneratorProps) => {
                   Drop a file here or click to browse
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Supports PDF and TXT files
+                  Supports PDF, TXT, and images (JPG, PNG, WEBP)
                 </p>
               </>
             )}
