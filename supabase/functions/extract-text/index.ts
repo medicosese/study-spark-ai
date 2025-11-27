@@ -30,34 +30,21 @@ serve(async (req) => {
     if (file.type === 'text/plain') {
       extractedText = await file.text();
     } else if (file.type === 'application/pdf') {
-      // For PDF files, extract text using a simple approach
+      // For PDF files, use pdf-parse library
       try {
-        // Import PDF.js from CDN
-        const pdfjsLib = await import('https://esm.sh/pdfjs-dist@3.11.174/build/pdf.mjs');
-        
-        // Set worker source
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://esm.sh/pdfjs-dist@3.11.174/build/pdf.worker.mjs';
-        
         const arrayBuffer = await file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
+        const buffer = new Uint8Array(arrayBuffer);
         
-        const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
-        const textParts: string[] = [];
+        // Import pdf-parse from npm via esm.sh
+        const pdfParse = await import('https://esm.sh/pdf-parse@1.1.1');
+        const data = await pdfParse.default(buffer);
+        extractedText = data.text;
         
-        // Extract text from each page (limit to first 50 pages)
-        const numPages = Math.min(pdf.numPages, 50);
-        for (let i = 1; i <= numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item: any) => item.str).join(' ');
-          textParts.push(pageText);
-        }
-        
-        extractedText = textParts.join('\n\n');
+        console.log('PDF parsed successfully, pages:', data.numpages, 'text length:', data.text.length);
       } catch (pdfError) {
         console.error('PDF parsing error:', pdfError);
         return new Response(
-          JSON.stringify({ error: 'Failed to parse PDF. The file might be corrupted or password-protected.' }),
+          JSON.stringify({ error: 'Failed to parse PDF. Please ensure the file is not password-protected and is a valid PDF.' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -81,8 +68,12 @@ serve(async (req) => {
       );
     }
 
-    // Clean up the extracted text
-    extractedText = extractedText.trim().replace(/\s+/g, ' ');
+    // Clean up the extracted text - preserve paragraphs but clean up excessive whitespace
+    extractedText = extractedText
+      .trim()
+      .replace(/\r\n/g, '\n')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/[ \t]+/g, ' ');
 
     if (!extractedText || extractedText.length < 10) {
       return new Response(
@@ -105,4 +96,3 @@ serve(async (req) => {
     );
   }
 });
-
