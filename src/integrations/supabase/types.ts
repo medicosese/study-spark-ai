@@ -14,7 +14,179 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      communities: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          type: Database["public"]["Enums"]["community_type"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          type?: Database["public"]["Enums"]["community_type"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type?: Database["public"]["Enums"]["community_type"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      community_bans: {
+        Row: {
+          banned_at: string
+          banned_by: string
+          community_id: string
+          expires_at: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_at?: string
+          banned_by: string
+          community_id: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_at?: string
+          banned_by?: string
+          community_id?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_bans_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_members: {
+        Row: {
+          community_id: string
+          id: string
+          joined_at: string
+          role: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          id?: string
+          joined_at?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_members_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_messages: {
+        Row: {
+          community_id: string
+          content: string | null
+          created_at: string
+          id: string
+          message_type: Database["public"]["Enums"]["message_type"]
+          user_id: string
+          voice_url: string | null
+        }
+        Insert: {
+          community_id: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          user_id: string
+          voice_url?: string | null
+        }
+        Update: {
+          community_id?: string
+          content?: string | null
+          created_at?: string
+          id?: string
+          message_type?: Database["public"]["Enums"]["message_type"]
+          user_id?: string
+          voice_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_messages_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      message_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reason: string
+          reported_by: string
+          status: Database["public"]["Enums"]["report_status"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reason: string
+          reported_by: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reason?: string
+          reported_by?: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "community_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +195,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      community_role: "member" | "mini_admin" | "admin"
+      community_type: "public" | "private"
+      message_type: "text" | "voice"
+      report_status: "pending" | "reviewed" | "resolved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +325,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      community_role: ["member", "mini_admin", "admin"],
+      community_type: ["public", "private"],
+      message_type: ["text", "voice"],
+      report_status: ["pending", "reviewed", "resolved"],
+    },
   },
 } as const
