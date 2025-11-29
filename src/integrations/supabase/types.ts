@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_actions: {
+        Row: {
+          action_type: string
+          admin_email: string
+          admin_id: string
+          details: Json | null
+          id: string
+          target_user_id: string | null
+          timestamp: string
+        }
+        Insert: {
+          action_type: string
+          admin_email: string
+          admin_id: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+          timestamp?: string
+        }
+        Update: {
+          action_type?: string
+          admin_email?: string
+          admin_id?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string | null
+          timestamp?: string
+        }
+        Relationships: []
+      }
       communities: {
         Row: {
           created_at: string
@@ -152,6 +182,39 @@ export type Database = {
           },
         ]
       }
+      daily_usage: {
+        Row: {
+          date: string
+          definitions_used: number
+          flashcards_used: number
+          id: string
+          mcqs_used: number
+          pdfs_generated: number
+          true_false_used: number
+          user_id: string
+        }
+        Insert: {
+          date?: string
+          definitions_used?: number
+          flashcards_used?: number
+          id?: string
+          mcqs_used?: number
+          pdfs_generated?: number
+          true_false_used?: number
+          user_id: string
+        }
+        Update: {
+          date?: string
+          definitions_used?: number
+          flashcards_used?: number
+          id?: string
+          mcqs_used?: number
+          pdfs_generated?: number
+          true_false_used?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       message_reports: {
         Row: {
           created_at: string
@@ -187,18 +250,128 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          badge: Database["public"]["Enums"]["badge_type"]
+          batch_year: string
+          bio: string | null
+          class_or_degree: string
+          created_at: string
+          custom_daily_definitions: number | null
+          custom_daily_flashcards: number | null
+          custom_daily_mcqs: number | null
+          custom_daily_pdfs: number | null
+          email: string
+          father_name: string
+          id: string
+          is_blocked: boolean
+          medical_id_card_url: string | null
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          profile_photo: string | null
+          real_name: string
+          updated_at: string
+          user_id: string
+          verification_status: Database["public"]["Enums"]["verification_status"]
+          whatsapp_number: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          badge?: Database["public"]["Enums"]["badge_type"]
+          batch_year: string
+          bio?: string | null
+          class_or_degree: string
+          created_at?: string
+          custom_daily_definitions?: number | null
+          custom_daily_flashcards?: number | null
+          custom_daily_mcqs?: number | null
+          custom_daily_pdfs?: number | null
+          email: string
+          father_name: string
+          id?: string
+          is_blocked?: boolean
+          medical_id_card_url?: string | null
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          profile_photo?: string | null
+          real_name: string
+          updated_at?: string
+          user_id: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          whatsapp_number: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          badge?: Database["public"]["Enums"]["badge_type"]
+          batch_year?: string
+          bio?: string | null
+          class_or_degree?: string
+          created_at?: string
+          custom_daily_definitions?: number | null
+          custom_daily_flashcards?: number | null
+          custom_daily_mcqs?: number | null
+          custom_daily_pdfs?: number | null
+          email?: string
+          father_name?: string
+          id?: string
+          is_blocked?: boolean
+          medical_id_card_url?: string | null
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          profile_photo?: string | null
+          real_name?: string
+          updated_at?: string
+          user_id?: string
+          verification_status?: Database["public"]["Enums"]["verification_status"]
+          whatsapp_number?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      app_role: "super_admin" | "admin" | "moderator" | "user"
+      badge_type: "bronze" | "diamond" | "gold_star"
       community_role: "member" | "mini_admin" | "admin"
       community_type: "public" | "private"
       message_type: "text" | "voice"
       report_status: "pending" | "reviewed" | "resolved"
+      subscription_plan: "free" | "basic" | "premium"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -326,10 +499,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["super_admin", "admin", "moderator", "user"],
+      badge_type: ["bronze", "diamond", "gold_star"],
       community_role: ["member", "mini_admin", "admin"],
       community_type: ["public", "private"],
       message_type: ["text", "voice"],
       report_status: ["pending", "reviewed", "resolved"],
+      subscription_plan: ["free", "basic", "premium"],
+      verification_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
