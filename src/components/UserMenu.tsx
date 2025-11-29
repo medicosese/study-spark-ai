@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Profile {
@@ -20,13 +20,19 @@ interface Profile {
   plan: string;
 }
 
+interface UserRole {
+  role: string;
+}
+
 const UserMenu = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
+    fetchUserRole();
   }, []);
 
   const fetchProfile = async () => {
@@ -41,6 +47,21 @@ const UserMenu = () => {
 
     if (data) {
       setProfile(data);
+    }
+  };
+
+  const fetchUserRole = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    if (data) {
+      setUserRole(data.role);
     }
   };
 
@@ -77,6 +98,8 @@ const UserMenu = () => {
     }
   };
 
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -105,6 +128,12 @@ const UserMenu = () => {
           <User className="mr-2 h-4 w-4" />
           Profile
         </DropdownMenuItem>
+        {isAdmin && (
+          <DropdownMenuItem onClick={() => navigate('/admin')}>
+            <Shield className="mr-2 h-4 w-4" />
+            Admin Panel
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" />
