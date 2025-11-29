@@ -8,6 +8,7 @@ import { AdPlaceholder } from "@/components/AdPlaceholder";
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
 import { Users } from "lucide-react";
+import UserMenu from "@/components/UserMenu";
 import type { GeneratedContent } from "@/types/studyMaterials";
 
 const Index = () => {
@@ -27,7 +28,7 @@ const Index = () => {
       <AdPlaceholder position="header" />
       
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between items-center mb-4">
           <Button 
             onClick={() => navigate('/community')}
             variant="outline"
@@ -36,6 +37,7 @@ const Index = () => {
             <Users className="h-4 w-4" />
             Community
           </Button>
+          <UserMenu />
         </div>
         
         <Hero onUpgradeClick={() => setIsPremiumModalOpen(true)} />
