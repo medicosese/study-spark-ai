@@ -131,7 +131,7 @@ const UserManagement = ({ isSuperAdmin }: UserManagementProps) => {
 
     const { error } = await supabase
       .from("user_roles")
-      .update({ role: newRole })
+      .update({ role: newRole as "admin" | "moderator" | "super_admin" | "user" })
       .eq("user_id", userId);
 
     if (error) {
@@ -179,8 +179,8 @@ const UserManagement = ({ isSuperAdmin }: UserManagementProps) => {
     const { error } = await supabase
       .from("profiles")
       .update({ 
-        plan: newPlan,
-        badge: badgeMap[newPlan] || "bronze"
+        plan: newPlan as "basic" | "free" | "premium",
+        badge: (badgeMap[newPlan] || "bronze") as "bronze" | "diamond" | "gold_star"
       })
       .eq("user_id", userId);
 
